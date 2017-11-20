@@ -1,0 +1,11 @@
+.game-roomDescription {
+    min-height: 10em;
+}
+.game-messageLog {
+    min-height: 20em;
+}
+.game-characterDetails {
+    min-height: 10em;
+}
+.game-playerList {
+}
