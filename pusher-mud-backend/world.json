@@ -8,7 +8,7 @@
     }
   },
   "rooms": {
-    "entrance": {
+    "start": {
       "description": "You stand at the entrance to The Crypts of Kas the Betrayer. Before you is a large stone archway leading into a long room",
       "exits": {
         "south": {
