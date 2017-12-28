@@ -1,0 +1,43 @@
+{
+  "doors": {
+    "enter": {
+      "state": "arch"
+    },
+    "room-1-corridor-1-8": {
+      "state": "closed"
+    }
+  },
+  "rooms": {
+    "entrance": {
+      "description": "You stand at the entrance to The Crypts of Kas the Betrayer. Before you is a large stone archway leading into a long room",
+      "exits": {
+        "south": {
+          "name": "Enter",
+          "door": "enter"
+        }
+      }
+    },
+    "room-1": {
+      "description": "A shallow pit lies in the north side of the room. The north and west walls are covered with cracks",
+      "exits": {
+        "north": {
+          "name": "Exit",
+          "door": "enter"
+        },
+        "south": {
+          "name": "South",
+          "door": "room-1-corridor-1-8"
+        }
+      }
+    },
+    "corridor-1-8": {
+      "description": "The corridor has flagstone flooring and reinforced masonry walls.",
+      "exits": {
+        "north": {
+          "name": "North",
+          "door": "room-1-corridor-1-8"
+        }
+      }
+    }
+  }
+}
