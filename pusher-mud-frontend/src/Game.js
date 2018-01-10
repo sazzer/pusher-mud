@@ -3,6 +3,7 @@ import './Game.css';
 import CharacterDetails from './CharacterDetails';
 import CharacterList from './CharacterList';
 import RoomDescription from './RoomDescription';
+import Messages from './Messages';
 import pusher from './pusher';
 import graphqlClient from './graphql';
 import gql from 'graphql-tag';
@@ -26,7 +27,8 @@ class Game extends Component {
         this._handleExitRoom = this._onExitRoom.bind(this);
 
         this.state = {
-            room: 'start'
+            room: 'start',
+            messages: []
         };
 
         pusher.subscribe('presence-room-start');
@@ -50,7 +52,16 @@ class Game extends Component {
                     room: roomName
                 });
             } else {
-
+                const messages = this.state.messages;
+                if (result.data.exitRoom.reason === 'DOOR_CLOSED') {
+                    messages.unshift({
+                        timestamp: new Date(),
+                        message: "That door is closed!"
+                    });
+                }
+                this.setState({
+                    messages
+                });
             }
         });
     }
@@ -63,7 +74,7 @@ class Game extends Component {
                         <RoomDescription room={ this.state.room } exitRoomHandler={this._handleExitRoom} />
                     </div>
                     <div className="game-messageLog">
-                        Message Log Here
+                        <Messages messages={this.state.messages} />
                     </div>
                     <div>
                         <input type="text" className="form-control" placeholder="Enter command" />
