@@ -52,17 +52,21 @@ class Game extends Component {
                     room: roomName
                 });
             } else {
-                const messages = this.state.messages;
                 if (result.data.exitRoom.reason === 'DOOR_CLOSED') {
-                    messages.unshift({
-                        timestamp: new Date(),
-                        message: "That door is closed!"
-                    });
+                    this._addMessage("That door is closed!");
                 }
-                this.setState({
-                    messages
-                });
             }
+        });
+    }
+
+    _addMessage(message) {
+        const messages = this.state.messages;
+        messages.unshift({
+            timestamp: new Date(),
+            message: message
+        });
+        this.setState({
+            messages
         });
     }
 
