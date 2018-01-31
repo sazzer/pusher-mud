@@ -1,6 +1,7 @@
 const users = require('../users');
 const graphqlTools = require('graphql-tools');
 const worldData = require('../world.json');
+const pusher = require('./pusher').pusher;
 
 const GraphqlSchema = `
 type Door {
@@ -36,6 +37,8 @@ type Mutation {
     openDoor(room: ID!, exit: ID!): Door!
     closeDoor(room: ID!, exit: ID!): Door!
     exitRoom(room: ID!, exit: ID!): ExitRoomResult!
+    speak(room: ID!, sessionId: ID!, message: String!): String
+    shout(room: ID!, sessionId: ID!, message: String!): String
 }
 `;
 
@@ -150,6 +153,21 @@ const resolvers = {
                 description: targetRoom.description,
                 exits
             }
+        },
+        speak: (_, { room, sessionId, message }) => {
+            pusher.trigger('presence-room-' + room, 'speak', {
+                user: users.getUser(sessionId),
+                message: message
+              }, sessionId);
+              return "Success";
+        },
+        shout: (_, { room, sessionId, message }) => {
+            pusher.trigger('global-events', 'shout', {
+                room: room,
+                user: users.getUser(sessionId),
+                message: message
+              }, sessionId);
+              return "Success";
         }
     },
     ExitRoomResult: {

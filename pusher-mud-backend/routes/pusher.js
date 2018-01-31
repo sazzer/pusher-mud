@@ -28,4 +28,7 @@ router.post('/auth', function(req, res, next) {
     res.send(auth);
 });
 
-module.exports = router;
+module.exports = {
+    router: router,
+    pusher: pusher
+};

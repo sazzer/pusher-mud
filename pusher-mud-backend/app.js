@@ -11,7 +11,7 @@ var graphqlSchema = require('./routes/graphql');
 
 
 var index = require('./routes/index');
-var pusher = require('./routes/pusher');
+var pusher = require('./routes/pusher').router;
 
 var app = express();
 
