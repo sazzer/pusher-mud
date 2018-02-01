@@ -20,18 +20,48 @@ const EXIT_ROOM_MUTATION = gql`mutation($room:ID!, $exit:ID!) {
     }
   }`;
 
+const SPEAK_MUTATION = gql`mutation($room:ID!, $session:ID!, $message: String!) {
+    speak(room: $room, sessionId: $session, message: $message)
+}`
+
+const SHOUT_MUTATION = gql`mutation($room:ID!, $session:ID!, $message: String!) {
+    shout(room: $room, sessionId: $session, message: $message)
+}`
 class Game extends Component {
     constructor(props) {
         super(props);
 
         this._handleExitRoom = this._onExitRoom.bind(this);
+        this._handleCommand = this._onCommand.bind(this);
 
         this.state = {
             room: 'start',
             messages: []
         };
 
-        pusher.subscribe('presence-room-start');
+        const channel = pusher.subscribe('presence-room-start');
+        channel.bind('pusher:subscription_succeeded', function() {
+            channel.bind('speak', function(data) { this._receiveSpeak(data); }.bind(this));
+        }.bind(this));
+
+        const globalChannel = pusher.subscribe('global-events');
+        globalChannel.bind('pusher:subscription_succeeded', function() {
+            globalChannel.bind('shout', function(data) { this._receiveShout(data); }.bind(this));
+        }.bind(this));
+    }
+
+    _receiveShout(data) {
+        const { room } = this.state;
+
+        if (room === data.room) {
+            this._addMessage(`${data.user.name} shouts "${data.message}"`);
+        } else {
+            this._addMessage(`Somebody shouts "${data.message}"`);
+        }
+    }
+
+    _receiveSpeak(data) {
+        this._addMessage(`${data.user.name} says "${data.message}"`);
     }
 
     _onExitRoom(exit) {
@@ -47,7 +77,11 @@ class Game extends Component {
             if (result.data.exitRoom["__typename"] === 'Room') {
                 const roomName = result.data.exitRoom.name;
                 pusher.unsubscribe(`presence-room-${room}`);
-                pusher.subscribe(`presence-room-${roomName}`);
+                const channel = pusher.subscribe(`presence-room-${roomName}`);
+                channel.bind('pusher:subscription_succeeded', function() {
+                    channel.bind('speak', function(data) { this._receiveSpeak(data); }.bind(this));
+                }.bind(this));
+
                 this.setState({
                     room: roomName
                 });
@@ -70,6 +104,39 @@ class Game extends Component {
         });
     }
 
+    _onCommand(e) {
+        e.preventDefault();
+        const { room } = this.state;
+
+        const command = this.commandInput.value;
+        this.commandInput.value = "";
+
+        if (command.startsWith("/shout ")) {
+            const shout = command.substring(7);
+            graphqlClient.mutate({
+                mutation: SHOUT_MUTATION,
+                variables: {
+                    room: room,
+                    session: pusher.connection.socket_id,
+                    message: shout
+                }
+            }).then((result) => {
+                this._addMessage(`You shout "${shout}"`);
+            });
+        } else {
+            graphqlClient.mutate({
+                mutation: SPEAK_MUTATION,
+                variables: {
+                    room: room,
+                    session: pusher.connection.socket_id,
+                    message: command
+                }
+            }).then((result) => {
+                this._addMessage(`You say "${command}"`);
+            });
+        }
+    }
+
     render() {
         return (
             <div className="row">
@@ -81,7 +148,9 @@ class Game extends Component {
                         <Messages messages={this.state.messages} />
                     </div>
                     <div>
-                        <input type="text" className="form-control" placeholder="Enter command" />
+                        <form onSubmit={this._handleCommand}>
+                            <input type="text" className="form-control" placeholder="Enter command" ref={(input) => { this.commandInput = input; }} />
+                        </form>
                     </div>
                 </div>
                 <div className="col-4">
