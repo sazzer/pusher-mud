@@ -42,6 +42,20 @@ type Mutation {
 }
 `;
 
+function broadcastRoomUpdatesForDoor(doorName) {
+    const targetRoomName = Object.keys(worldData.rooms)
+        .filter(roomName => {
+            const roomDetails = worldData.rooms[roomName];
+            const hasDoor = Object.keys(roomDetails.exits)
+                .map(exitName => roomDetails.exits[exitName])
+                .map(exitDetails => exitDetails.door)
+                .includes(doorName);
+            return hasDoor;
+        })
+        .forEach(roomName => {
+            pusher.trigger('presence-room-' + roomName, 'updated', {});
+        });
+}
 
 const resolvers = {
     Query: {
@@ -93,6 +107,9 @@ const resolvers = {
             if (doorData.state === 'closed') {
                 doorData.state = 'open';
             }
+
+            broadcastRoomUpdatesForDoor(doorName);
+
             return {
                 name: doorName,
                 state: doorData.state
@@ -107,6 +124,9 @@ const resolvers = {
             if (doorData.state === 'open') {
                 doorData.state = 'closed';
             }
+
+            broadcastRoomUpdatesForDoor(doorName);
+
             return {
                 name: doorName,
                 state: doorData.state
